@@ -9,8 +9,7 @@ method is Bitcoin via the cashu-epay gateway.
 
 Lives in `/opt/cashu-epay-demo` on `api-relay`. **Fully isolated from production**
 (`/opt/new-api-relay`): own compose project `cashu-epay-demo`, own network, own MySQL, no Redis.
-Production is only ever *read* (one `mysqldump --single-transaction` in `sync-channels.sh`, one usage
-`SELECT` per hour in `sync-usage.sh`).
+Production is only ever *read* (one `mysqldump --single-transaction` in `sync-channels.sh`).
 
 | what | where |
 |---|---|
@@ -54,9 +53,8 @@ new-api for the console host, except `^/v1/` which goes straight to new-api; it 
 If an anchor doesn't match (another image), the script empties `patch.conf` → original frontend, exit 1. **Re-run
 `./patch-console.py` after changing `NEW_API_IMAGE`.**
 
-`/rankings` counts both sites: `sync-usage.sh` (root cron, minute 7 hourly, log `journalctl -t cashu-sync-usage`)
-copies production's hourly token totals per model into the demo's `quota_data` as rows tagged
-`node_name=bhbtc-relay` (one transaction: delete old copy, insert new). Only model + hour + totals leave production.
+`/rankings` and the dashboard count this site's own usage only. (Until 2026-10-12 an hourly `sync-usage.sh` cron
+merged production's per-model totals in as `node_name=bhbtc-relay` rows; removed, see git history.)
 
 ## Commands
 
@@ -64,7 +62,6 @@ copies production's hourly token totals per model into the demo's `quota_data` a
 cd /opt/cashu-epay-demo
 ./bootstrap.sh                      # first-time setup (idempotent)
 ./sync-channels.sh                  # re-copy channels + pricing from production (restarts demo new-api only)
-./sync-usage.sh                     # re-copy production usage totals for /rankings (cron does it hourly)
 ./export-upstreams.sh               # refresh public/upstreams.json for /network (anonymized; sync-channels.sh runs it too)
 ./patch-console.py                  # re-patch the console frontend (after an image change); reloads the console nginx
 docker compose logs -f gateway      # watch ⚡ / 🥜 / 📨 events live during the demo
